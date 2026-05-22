@@ -3,15 +3,14 @@ import random
 import requests
 import json
 from datetime import datetime
-import anthropic
+import google.generativeai as genai
 
 # ── Config dari environment variables ──────────────────────────────────────
-ANTHROPIC_API_KEY   = os.environ["ANTHROPIC_API_KEY"]
+GEMINI_API_KEY       = os.environ["GEMINI_API_KEY"]
 THREADS_ACCESS_TOKEN = os.environ["THREADS_ACCESS_TOKEN"]
-THREADS_USER_ID     = os.environ["THREADS_USER_ID"]
+THREADS_USER_ID      = os.environ["THREADS_USER_ID"]
 
 # ── Topics pool ─────────────────────────────────────────────────────────────
-# Edit ini sesuai yang mau lo bahas. Makin banyak makin bagus.
 TOPICS = [
     "kenapa gua nolak tawaran kerja luar negeri padahal gajinya jauh lebih gede",
     "realita bangun brand sambil kerja full-time sebagai network engineer",
@@ -35,8 +34,8 @@ TOPICS = [
     "kenapa personal branding founder lebih penting dari iklan produk",
 ]
 
-# ── System prompt / persona Dani ────────────────────────────────────────────
-SYSTEM_PROMPT = """Kamu adalah ghostwriter untuk seorang founder muda Indonesia bernama Dani.
+# ── Prompt / persona ────────────────────────────────────────────────────────
+PROMPT_TEMPLATE = """Kamu adalah ghostwriter untuk seorang founder muda Indonesia bernama Dani.
 
 PROFIL DANI:
 - NOC Engineer di perusahaan fintech besar di Jakarta
@@ -52,28 +51,20 @@ GAYA PENULISAN:
 - WAJIB mulai dengan question hook (contoh: "Pernah nggak lo...", "Emang beneran bisa...", "Kalau lo dikasih pilihan...")
 - Jujur dan spesifik — hindari kalimat motivasi generik dan kosong
 - Panjang: 3–5 baris, maksimal ~280 karakter
-- Hashtag: maksimal 2, atau tidak sama sekali kalau tidak relevan
+- Hashtag: maksimal 2, atau tidak sama sekali
 - Emoji: maksimal 1–2, jangan lebay
 
-OUTPUT:
-Tulis HANYA teks post Threads-nya saja. Tidak ada penjelasan tambahan, tidak ada catatan, langsung teksnya."""
+Buat 1 post Threads tentang topik ini: {topic}
+
+Tulis HANYA teks post-nya saja. Tidak ada penjelasan tambahan, langsung teksnya."""
 
 
 # ── Functions ────────────────────────────────────────────────────────────────
 def generate_post(topic: str) -> str:
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=300,
-        system=SYSTEM_PROMPT,
-        messages=[
-            {
-                "role": "user",
-                "content": f"Buat 1 post Threads tentang topik ini: {topic}"
-            }
-        ]
-    )
-    return message.content[0].text.strip()
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(PROMPT_TEMPLATE.format(topic=topic))
+    return response.text.strip()
 
 
 def create_threads_container(text: str) -> str:
