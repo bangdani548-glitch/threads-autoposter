@@ -2,12 +2,10 @@ name: Auto Post to Threads
 
 on:
   schedule:
-    # 3x sehari — jam 07:00, 12:00, 20:00 WIB
-    # WIB = UTC+7, jadi dikurangi 7 jam untuk UTC
-    - cron: '0 0 * * *'    # 07:00 WIB
-    - cron: '0 5 * * *'    # 12:00 WIB
-    - cron: '0 13 * * *'   # 20:00 WIB
-  workflow_dispatch:        # Bisa trigger manual juga dari GitHub
+    - cron: '0 0 * * *'
+    - cron: '0 5 * * *'
+    - cron: '0 13 * * *'
+  workflow_dispatch:
 
 jobs:
   post-to-threads:
@@ -23,11 +21,11 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install anthropic requests
+        run: pip install google-generativeai requests
 
       - name: Run poster script
         env:
-          ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY:       ${{ secrets.GEMINI_API_KEY }}
           THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
           THREADS_USER_ID:      ${{ secrets.THREADS_USER_ID }}
         run: python poster.py
